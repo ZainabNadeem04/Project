@@ -1,101 +1,258 @@
+
+
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { Data } from "./Data"; // Assuming Data is in src/data.js
+import { useNavigate } from "react-router-dom";
+import { Data } from "./Data"; // Adjust the path to your data file
 
 const MainPage = () => {
-  const [cart, setCart] = useState([]);
-  const [quantities, setQuantities] = useState({});
-  const [selectedPizza, setSelectedPizza] = useState(null); // Tracks selected pizza category
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [cart, setCart] = useState([]); // State to hold cart items
+  const [isAddingToCart, setIsAddingToCart] = useState(false); // New state to handle double-click issue
+  const navigate = useNavigate();
 
-  // Extract unique pizza categories without size
-  const pizzaCategories = [...new Set(Data.map((item) => item.Title.split(" ")[0]))];
-
-  // Function to update quantity
-  const handleQuantityChange = (id, value) => {
-    setQuantities((prevQuantities) => ({
-      ...prevQuantities,
-      [id]: value > 0 ? parseInt(value, 10) : 1,
-    }));
+  const handleCategoryClick = (category) => {
+    setSelectedCategory(category);
+    setSelectedItem(null);
   };
 
-  // Function to add an item to the cart
-  const addToCart = (item) => {
-    const quantity = quantities[item.id] || 1;
+  const handleItemClick = (item) => {
+    setSelectedItem(item);
+  };
 
+
+
+  const handleAddToCart = (item, size, quantity) => {
+    if (!quantity || quantity <= 0) {
+      alert("Please enter a valid quantity.");
+      return;
+    }
+  
+    if (isAddingToCart) return; // Prevent multiple additions
+    setIsAddingToCart(true); // Disable the button immediately
+  
+    const newItem = {
+      ...item,
+      size,
+      quantity: parseInt(quantity, 10),
+      id: Date.now(), // Unique ID for each cart item
+    };
+  
     setCart((prevCart) => {
-      const itemExists = prevCart.find((cartItem) => cartItem.id === item.id);
-      let newCart;
-
-      if (itemExists) {
-        newCart = prevCart.map((cartItem) =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + quantity }
-            : cartItem
-        );
-      } else {
-        newCart = [...prevCart, { ...item, quantity }];
+      // Check if item with the same name and size exists
+      const existingIndex = prevCart.findIndex(
+        (cartItem) => cartItem.name === item.name && cartItem.size === size
+      );
+  
+      if (existingIndex >= 0) {
+        // Update quantity if item exists
+        const updatedCart = [...prevCart];
+        updatedCart[existingIndex].quantity += newItem.quantity;
+        return updatedCart;  // Return updated cart without adding a duplicate
       }
-
-      // Alert user about the item added
-      alert(`${quantity} x ${item.Title} added to cart!`);
-
-      return newCart;
+  
+      // Add new item to cart if not a duplicate
+      return [...prevCart, newItem];
     });
+  
+    alert(`${item.name} (${size.toUpperCase()}) added to cart.`);
+    setIsAddingToCart(false); // Re-enable the button
+    setSelectedItem(null); // Reset the selected item
   };
-
+  
+const handleViewCart = () => {
+     navigate("/cart", { state: { cart } }); // Pass cart data to Cart page
+   };
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-100 p-4">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-red-600">Pizza Store</h1>
-        <Link to="/cart" state={{ cart }}>
-          <button className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg shadow-md">
-            View Cart
-          </button>
-        </Link>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-700">Menu</h1>
+        <button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700"  onClick={handleViewCart} >
+          View Cart ({cart.length})
+        </button>
       </div>
 
-      {/* Show Pizza Categories */}
-      {!selectedPizza ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {pizzaCategories.map((pizza, index) => (
+      {/* Categories */}
+      {!selectedCategory && (
+        <div className="grid grid-cols-2 gap-4">
+          {Object.keys(Data.menu).map((category) => (
             <button
-              key={index}
-              onClick={() => setSelectedPizza(pizza)}
-              className="bg-white p-6 rounded-lg shadow-lg text-2xl font-semibold text-center text-red-500 hover:bg-red-100 transition-all"
+              key={category}
+              className="bg-gradient-to-r from-green-400 to-blue-500 text-white py-4 px-6 rounded-lg text-lg shadow-md hover:shadow-lg"
+              onClick={() => handleCategoryClick(category)}
             >
-              {pizza}
+              {category.replace(/_/g, " ").toUpperCase()}
             </button>
           ))}
         </div>
-      ) : (
-        // Show Flavors when a pizza is selected
+      )}
+
+      {/* Items in Selected Category */}
+      {selectedCategory && !selectedItem && (
         <div>
-          <button onClick={() => setSelectedPizza(null)} className="text-red-500 mb-4 flex items-center">
-            ← Back
-          </button>
-          <h2 className="text-3xl font-semibold text-red-600 mb-6">{selectedPizza} Flavors</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Data.filter((item) => item.Title.startsWith(selectedPizza)).map((item) => (
-              <div key={item.id} className="bg-white p-6 rounded-lg shadow-md text-center">
-                <h3 className="text-xl font-semibold mb-2">{item.Title}</h3>
-                <p className="text-gray-700 mb-4">Price: RS {item.price}</p>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-700">
+              {selectedCategory.replace(/_/g, " ").toUpperCase()}
+            </h2>
+            <button
+              className="text-red-500 underline"
+              onClick={() => setSelectedCategory(null)}
+            >
+              Back to Categories
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {Data.menu[selectedCategory].map((item, index) => (
+              <button
+                key={index}
+                className="bg-white text-gray-800 py-3 px-5 rounded-lg border shadow-md hover:shadow-lg hover:bg-gray-50"
+                onClick={() => handleItemClick(item)}
+              >
+                {item.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Item Details */}
+      {selectedItem && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-700">
+              {selectedItem.name}
+            </h2>
+            <button
+              className="text-red-500 underline"
+              onClick={() => setSelectedItem(null)}
+            >
+              Back to {selectedCategory.replace(/_/g, " ").toUpperCase()}
+            </button>
+          </div>
+          <form
+            className="space-y-4 bg-white p-4 rounded-lg shadow-md"
+            onSubmit={(e) => e.preventDefault()}
+          >
+            {selectedCategory === "pizza" || selectedCategory === "bar_b_q" ? (
+              <>
+                {["small", "medium", "large"].map(
+                  (size) =>
+                    selectedItem[size] && (
+                      <div key={size}>
+                        <label className="block text-gray-700 font-medium">
+                          {size.toUpperCase()} ({selectedItem[size]})
+                        </label>
+                        <input
+                          type="number"
+                          placeholder={`Enter quantity for ${size}`}
+                          className="border rounded p-2 w-full"
+                          id={`quantity-${size}`}
+                        />
+                        <button
+                          className="bg-green-500 text-white py-2 px-4 rounded mt-2 hover:bg-green-600"
+                          onClick={() =>
+                            handleAddToCart(
+                              selectedItem,
+                              size,
+                              document.getElementById(`quantity-${size}`).value
+                            )
+                          }
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    )
+                )}
+              </>
+            ) : selectedCategory === "nuggets" ? (
+              <>
+                {["six", "twelve"].map(
+                  (size) =>
+                    selectedItem[size] && (
+                      <div key={size}>
+                        <label className="block text-gray-700 font-medium">
+                          {size.toUpperCase()} Pieces ({selectedItem[size]})
+                        </label>
+                        <input
+                          type="number"
+                          placeholder={`Enter quantity for ${size}`}
+                          className="border rounded p-2 w-full"
+                          id={`quantity-${size}`}
+                        />
+                        <button
+                          className="bg-green-500 text-white py-2 px-4 rounded mt-2 hover:bg-green-600"
+                          onClick={() =>
+                            handleAddToCart(
+                              selectedItem,
+                              size,
+                              document.getElementById(`quantity-${size}`).value
+                            )
+                          }
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    )
+                )}
+              </>
+            ) : selectedCategory === "pasta" ? (
+              <>
+                {["half", "full"].map(
+                  (size) =>
+                    selectedItem[size] && (
+                      <div key={size}>
+                        <label className="block text-gray-700 font-medium">
+                          {size.toUpperCase()} ({selectedItem[size]})
+                        </label>
+                        <input
+                          type="number"
+                          placeholder={`Enter quantity for ${size}`}
+                          className="border rounded p-2 w-full"
+                          id={`quantity-${size}`}
+                        />
+                        <button
+                          className="bg-green-500 text-white py-2 px-4 rounded mt-2 hover:bg-green-600"
+                          onClick={() =>
+                            handleAddToCart(
+                              selectedItem,
+                              size,
+                              document.getElementById(`quantity-${size}`).value
+                            )
+                          }
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    )
+                )}
+              </>
+            ) : (
+              <div>
+                <label className="block text-gray-700 font-medium">
+                  Price ({selectedItem.price})
+                </label>
                 <input
                   type="number"
-                  min="1"
-                  value={quantities[item.id] || 1}
-                  onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2 mb-4"
+                  placeholder="Enter quantity"
+                  className="border rounded p-2 w-full"
+                  id="quantity-price"
                 />
                 <button
-                  onClick={() => addToCart(item)}
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+                  className="bg-green-500 text-white py-2 px-4 rounded mt-2 hover:bg-green-600"
+                  onClick={() =>
+                    handleAddToCart(
+                      selectedItem,
+                      "default",
+                      document.getElementById("quantity-price").value
+                    )
+                  }
                 >
                   Add to Cart
                 </button>
               </div>
-            ))}
-          </div>
+            )}
+          </form>
         </div>
       )}
     </div>
