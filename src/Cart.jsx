@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -9,16 +10,8 @@ const Cart = () => {
 
   // Calculate total price dynamically
   const totalPrice = cart.reduce((total, item) => {
-    const itemTotal = item.price
-      ? item.price * item.quantity
-      : item.size === "full"
-      ? item.full * item.quantity
-      : item.size === "half"
-      ? item.half * item.quantity
-      : item.size === "six"
-      ? item.six * item.quantity
-      : item.twelve * item.quantity;
-    return total + itemTotal;
+    const price = item.price || (item.size && item[item.size]) || 0; // Default to 0 if price/size is missing
+    return total + price * (item.quantity || 1); // Default quantity to 1
   }, 0);
 
   // Handle item deletion
@@ -56,16 +49,16 @@ const Cart = () => {
               </thead>
               <tbody>
                 {cart.map((item) => {
-                  const price = item.price || item[item.size];
-                  const totalPriceForItem = price * item.quantity;
+                  const price = item.price || (item.size && item[item.size]) || 0;
+                  const totalPriceForItem = price * (item.quantity || 1);
                   return (
                     <tr key={item.id} className="border-b hover:bg-gray-100">
                       <td className="py-3 px-4">{item.name}</td>
                       <td className="py-3 px-4">
                         {item.size ? item.size.charAt(0).toUpperCase() + item.size.slice(1) : "N/A"}
                       </td>
-                      <td className="py-3 px-4">{item.quantity}</td>
-                      <td className="py-3 px-4">RS {price ? price : "N/A"}</td>
+                      <td className="py-3 px-4">{item.quantity || 1}</td>
+                      <td className="py-3 px-4">RS {price}</td>
                       <td className="py-3 px-4">RS {totalPriceForItem}</td>
                       <td className="py-3 px-4">
                         <button
@@ -109,4 +102,5 @@ const Cart = () => {
 };
 
 export default Cart;
+
 
