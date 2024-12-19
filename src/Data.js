@@ -20,15 +20,15 @@ export const Data = {
       ],
       wrap: [
         { name: "Chicken Wrap", price: 250 },
-        { name: "Arabic Wrap", price: 270 },
+        { name: "Arabic Wrap", price: 250 },
         { name: "Afghani Wrap", price: 280 },
       ],
       pasta: [
-        { name: "Chicken Cheese Pasta", half: 380, full: 480, category: "pasta" },
+        { name: "Chicken Cheese Pasta", half: 380, full: 550, category: "pasta" },
       ],
       nuggets: [
-        { name: "Chicken Nuggets", six: 250, twelve: 450, category: "nuggets" },
-        { name: "Oven Baked Wings", six: 440, twelve: 650, category: "nuggets" },
+        { name: "Chicken Nuggets", eight: 440, twelve: 650, category: "nuggets" },
+        { name: "Oven Baked Wings", eight: 440, twelve: 650, category: "nuggets" },
       ],
       
       fries: [
