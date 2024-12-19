@@ -44,12 +44,14 @@ export const Data = {
       extras: [
         { name: "Extra Topping", small: 50, medium: 70, large: 100 },
       ],
+      special_offer: [
+       { name: "Student Pizza",
+        price: 280,
+      }
+      ]
       
     },
   
-    special_offer: {
-      name: "Student Pizza",
-      price: 280,
-    },
+   
   };
   
