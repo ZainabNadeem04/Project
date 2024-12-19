@@ -7,8 +7,19 @@ const Cart = () => {
   const { cart: initialCart } = location.state || { cart: [] };
   const [cart, setCart] = React.useState(initialCart); // Local state for cart
 
-  // Calculate total price
-  const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  // Calculate total price dynamically
+  const totalPrice = cart.reduce((total, item) => {
+    const itemTotal = item.price
+      ? item.price * item.quantity
+      : item.size === "full"
+      ? item.full * item.quantity
+      : item.size === "half"
+      ? item.half * item.quantity
+      : item.size === "six"
+      ? item.six * item.quantity
+      : item.twelve * item.quantity;
+    return total + itemTotal;
+  }, 0);
 
   // Handle item deletion
   const handleDelete = (id) => {
@@ -36,6 +47,7 @@ const Cart = () => {
               <thead className="bg-red-500 text-white">
                 <tr>
                   <th className="py-3 px-4 text-left">Item Name</th>
+                  <th className="py-3 px-4 text-left">Size/Type</th>
                   <th className="py-3 px-4 text-left">Quantity</th>
                   <th className="py-3 px-4 text-left">Unit Price (RS)</th>
                   <th className="py-3 px-4 text-left">Total Price (RS)</th>
@@ -43,22 +55,29 @@ const Cart = () => {
                 </tr>
               </thead>
               <tbody>
-                {cart.map((item) => (
-                  <tr key={item.id} className="border-b hover:bg-gray-100">
-                    <td className="py-3 px-4">{item.Title}</td>
-                    <td className="py-3 px-4">{item.quantity}</td>
-                    <td className="py-3 px-4">RS {item.price}</td>
-                    <td className="py-3 px-4">RS {item.price * item.quantity}</td>
-                    <td className="py-3 px-4">
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {cart.map((item) => {
+                  const price = item.price || item[item.size];
+                  const totalPriceForItem = price * item.quantity;
+                  return (
+                    <tr key={item.id} className="border-b hover:bg-gray-100">
+                      <td className="py-3 px-4">{item.name}</td>
+                      <td className="py-3 px-4">
+                        {item.size ? item.size.charAt(0).toUpperCase() + item.size.slice(1) : "N/A"}
+                      </td>
+                      <td className="py-3 px-4">{item.quantity}</td>
+                      <td className="py-3 px-4">RS {price ? price : "N/A"}</td>
+                      <td className="py-3 px-4">RS {totalPriceForItem}</td>
+                      <td className="py-3 px-4">
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -90,3 +109,4 @@ const Cart = () => {
 };
 
 export default Cart;
+
